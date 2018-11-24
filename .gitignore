@@ -1,0 +1,5 @@
+nbproject/
+c++example/
+*.o
+*cmake*
+.idea*
