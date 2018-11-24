@@ -1,0 +1,31 @@
+Phase 1
+==========
+	in what specific scenariois the readOnly flag of TranslationEntry set? In other words, when should a user prog not be allowed to modify the contents of a page?
+
+	
+Phase 2
+==========
+Trace how the MIPS simulator (in machine/mipssim.cc) executes instructions. 
+	Uses fetch, decode, execute model to run user programs. Example (fetch+decode):
+		if (!machine->ReadMem(registers[PCReg], 4, &raw))
+			return;			// exception occurred
+		instr->value = raw;
+		instr->Decode();
+		
+As a part of executing an instruction, the machine accesses main memory for loading the instruction itself (code segment) and possibly for its operands (data/stack segment).
+	Fetch with
+		machine->ReadMem(registers[PCReg], 4, &raw)
+	and arguments read from directly from registers. Example from case OP_ADD:
+		sum = registers[instr->rs] + registers[instr->rt];
+	
+
+Figure out how memory access is implemented...
+	See Machine::ReadMem in translate.cc
+	
+
+...and where the virtual to physical translation is performed. 
+	There is a call to Translate(...) function:
+		exception = Translate(addr, &physicalAddress, size, FALSE);
+
+
+It is during the translation process that the machine can determine if the virtual address it is trying to access belongs to a page which does not reside in physical memory. Figure out how, when and where the PageFaultException is thrown.
