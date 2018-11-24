@@ -58,8 +58,6 @@ int syscallKill();
 void syscallHalt();
 int syscallExec();
 
-
-#if defined(CHANGED)
 void
 ExceptionHandler(ExceptionType which)
 {
@@ -110,26 +108,7 @@ ExceptionHandler(ExceptionType which)
 	ASSERT(FALSE);
     }
 }
-#else
-void
-ExceptionHandler(ExceptionType which)
-{
-    int type = machine->ReadRegister(2);
 
-    if ((which == SyscallException) && (type == SC_Halt)) 
-    {
-	DEBUG('a', "Shutdown, initiated by user program.\n");
-   	interrupt->Halt();
-    }
-    else 
-    {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(FALSE);
-    }
-}
-#endif
-
-#if defined(CHANGED)
 void updateCounter()
 {
     int counter;
@@ -392,5 +371,3 @@ int syscallFork()
     return tempAd->getPID();
 }
 
-
-#endif

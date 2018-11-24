@@ -15,11 +15,8 @@
 
 #include "copyright.h"
 #include "filesys.h"
-
-#ifdef CHANGED
 #include "pcb.h"
 class pcb;
-#endif
 
 
 #define UserStackSize		1024 	// increase this as necessary!
