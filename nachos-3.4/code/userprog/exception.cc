@@ -90,7 +90,7 @@ ExceptionHandler(ExceptionType which) {
         updateCounter();
     } else if (which == PageFaultException) {
         DEBUG('d', "Page Fault Exception occurred!\n");
-        int vpn = machine->ReadRegister(BadVAddrReg);
+        int vpn = machine->ReadRegister(BadVAddrReg)/PageSize;
         handlePageFaultException(vpn);
     } else {
         printf("Unexpected user mode exception %d %d\n", which, type);

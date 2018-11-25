@@ -98,7 +98,12 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 
     printf("Loaded Program: [%d] code | [%d] data | [%d] bss\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size);
 
-
+    //REMOVE this if uncommenting the block below
+    pageTable = new TranslationEntry[numPages];
+    
+    //REMOVED so that program initially loads with no pages in memory. Together with instantiating the pageTable variable above,
+    //this will cause an infinite loop of PageFaultException to occur when running a user prog
+    /*
     //test that there are enough pages left for this process
     if (numPages > (unsigned) mans_man->getPages()) {
         printf("Not Enough Memory for Process %d\n", this->getPID());
@@ -107,7 +112,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     }
 
 
-    DEBUG('a', "Initializing address space, num pages %d, size %d\n",
+    DEBUG('d', "\tInitializing address space, num pages %d, size %d\n",
             numPages, size);
 
     memLock->Acquire();
@@ -127,7 +132,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     // Copy the code section into memory
     counter = 0;
     if (noffH.code.size > 0) {
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
+        DEBUG('d', "\tInitializing code segment, at 0x%x, size %d\n",
                 noffH.code.virtualAddr, noffH.code.size);
 
         while (counter < noffH.code.size) {
@@ -141,7 +146,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     // Copy the initialized data section
     counter = 0;
     if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
+        DEBUG('d', "\tInitializing data segment, at 0x%x, size %d\n",
                 noffH.initData.virtualAddr, noffH.initData.size);
         while (counter < noffH.initData.size) {
 
@@ -153,6 +158,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     }
 
     memLock->Release();
+     * */
 }
 
 
