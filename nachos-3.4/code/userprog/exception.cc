@@ -57,6 +57,7 @@ void helpFork(int i);
 int syscallKill();
 void syscallHalt();
 int syscallExec();
+void handlePageFaultException(int vpn);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -101,6 +102,12 @@ ExceptionHandler(ExceptionType which)
 	DEBUG('a', "Kill System Call.\n");
 	syscallKill();
 	updateCounter();
+    }
+    else if(which == PageFaultException)
+    { 
+	DEBUG('d', "Page Fault Exception occurred!\n");
+        int vpn = machine->ReadRegister(BadVAddrReg);
+	handlePageFaultException(vpn);
     }
     else 
     {
@@ -369,5 +376,11 @@ int syscallFork()
     machine->WriteRegister(2, tempAd->getPID());
     memLock->Release();
     return tempAd->getPID();
+}
+
+void handlePageFaultException(int vpn)
+{
+    DEBUG('d', "Handling the Page Fault Exception...\n");
+    
 }
 

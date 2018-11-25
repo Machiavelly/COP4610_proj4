@@ -1,9 +1,10 @@
-Phase 1
+Stage 1
 ==========
 	in what specific scenariois the readOnly flag of TranslationEntry set? In other words, when should a user prog not be allowed to modify the contents of a page?
 
 	
-Phase 2
+	
+Stage 2
 ==========
 Trace how the MIPS simulator (in machine/mipssim.cc) executes instructions. 
 	Uses fetch, decode, execute model to run user programs. Example (fetch+decode):
@@ -20,12 +21,73 @@ As a part of executing an instruction, the machine accesses main memory for load
 	
 
 Figure out how memory access is implemented...
-	See Machine::ReadMem in translate.cc
+	See Machine::ReadMem in translate.cc...
+	1. A virtual address is translated to a physical address
+		exception = Translate(addr, &physicalAddress, size, FALSE);
 	
 
 ...and where the virtual to physical translation is performed. 
-	There is a call to Translate(...) function:
+	There is a call to Translate(...) function, also in translate.cc:
 		exception = Translate(addr, &physicalAddress, size, FALSE);
-
+		if (exception != NoException) {
+			machine->RaiseException(exception, addr);
+			return FALSE;
+		}
 
 It is during the translation process that the machine can determine if the virtual address it is trying to access belongs to a page which does not reside in physical memory. Figure out how, when and where the PageFaultException is thrown.
+	As described above, any exceptions, including "PageFaultException" is handled by
+		if (exception != NoException) {
+			machine->RaiseException(exception, addr);
+			return FALSE;
+		}
+	where RaiseException(exception, addr) is defined in machine.cc as
+		void
+		Machine::RaiseException(ExceptionType which, int badVAddr)
+		{
+			DEBUG('m', "Exception: %s\n", exceptionNames[which]);
+			
+		//  ASSERT(interrupt->getStatus() == UserMode);
+			registers[BadVAddrReg] = badVAddr;
+			DelayedLoad(0, 0);			// finish anything in progress
+			interrupt->setStatus(SystemMode);
+			ExceptionHandler(which);		// interrupts are enabled at this point
+			interrupt->setStatus(UserMode);
+		}
+	and ExceptionHandler(which) is defined in exception.cc, which handles system calls
+	
+	
+Stage 3
+==========
+In stage 2, you would have figured out how, when and where the PageFaultException is raised. This Exception results in control being passed back to the kernel and is supposed to be handled in a manner similar to system calls. Currently, this exception is not handled. Add code to exception.cc to call a stub routine when this Exception is raised. This will be your page fault handler. 
+
+	This means add to the exception.cc ExceptionHandler method:
+		else if((which == SyscallException) && (type ==SC_Kill))
+		{ 
+			DEBUG('a', "PageFaultException Call.\n");
+			syscallPageFaultException();
+			updateCounter();
+		}
+	and define syscallPageFaultException.
+	
+	***Do we need to update PC reg with updateCounter()?
+
+As a part of raising the Exception, the processor saves the faulting virtual address in a register that will be used by the kernel to handle the Exception.
+
+	Bad virtual address can be accessed by machine->ReadRegister(BadVAddrReg)
+
+Note that, at this point, this mechanism is not exercised by program execution as processes are loaded in their entirety and no page faults are generated
+	
+	????
+	
+	
+Stage 4
+==========
+Figure out how to start a process with none of its pages in memory. For this, you will need to change the code that you wrote inProject 2 for process creation. 
+	
+	????
+	
+You may also need to modify the pagetable structure (in theTranslationEntry class) to keep track of pages that are not in memory. Note that you are free to add fields to the this structure (as long as you don't disturb the existing fields).
+
+	
+
+You will need to keep track of the location from which disk-resident pages are to be loaded. Remember that, initially the pages of a process are all in the executable file. Once a page has been brought in to memory, any subsequent flush of this page to disk (during page replacement) should be to backing store (this storage will be created in Stage 6) and not to the executable file. You will also need to allocate space in the backing store for the pages of this process. You can choose to be conservative and allocate space for the entire virtual address space of the process on the backing store at creation time. You can be even more conservative and choose to copy the entire executable file into the allocated space at startup. If you did this, you would need to only concern yourself with moving pages between backing store and the memory during page fault handling. This is only a suggestion. Alternate implementations are more than welcome - you can get up to 10 extra points.
