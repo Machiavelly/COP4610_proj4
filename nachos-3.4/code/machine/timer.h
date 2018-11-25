@@ -24,25 +24,28 @@
 #include "utility.h"
 
 // The following class defines a hardware timer. 
+
 class Timer {
-  public:
+public:
     Timer(VoidFunctionPtr timerHandler, int callArg, bool doRandom);
-				// Initialize the timer, to call the interrupt
-				// handler "timerHandler" every time slice.
-    ~Timer() {}
+    // Initialize the timer, to call the interrupt
+    // handler "timerHandler" every time slice.
 
-// Internal routines to the timer emulation -- DO NOT call these
+    ~Timer() {
+    }
 
-    void TimerExpired();	// called internally when the hardware
-				// timer generates an interrupt
+    // Internal routines to the timer emulation -- DO NOT call these
 
-    int TimeOfNextInterrupt();  // figure out when the timer will generate
-				// its next interrupt 
+    void TimerExpired(); // called internally when the hardware
+    // timer generates an interrupt
 
-  private:
-    bool randomize;		// set if we need to use a random timeout delay
-    VoidFunctionPtr handler;	// timer interrupt handler 
-    int arg;			// argument to pass to interrupt handler
+    int TimeOfNextInterrupt(); // figure out when the timer will generate
+    // its next interrupt 
+
+private:
+    bool randomize; // set if we need to use a random timeout delay
+    VoidFunctionPtr handler; // timer interrupt handler 
+    int arg; // argument to pass to interrupt handler
 
 };
 

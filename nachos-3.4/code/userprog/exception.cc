@@ -60,74 +60,54 @@ int syscallExec();
 void handlePageFaultException(int vpn);
 
 void
-ExceptionHandler(ExceptionType which)
-{
+ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2);
 
-    if ((which == SyscallException) && (type == SC_Halt)) 
-    {
-	DEBUG('a', "Shutdown, initiated by user program.\n");
-	syscallHalt();
-    } 
-    else if ((which == SyscallException) && (type == SC_Yield)) 
-    {
-	DEBUG('a', "Yield System Call.\n");
-	syscallYield();
-	updateCounter();
-    }
-    else if ((which == SyscallException) && (type == SC_Exit)) 
-    {
-	DEBUG('a', "Exit System Call.\n");
-	syscallExit();
-    }
-    else if ((which == SyscallException) && (type == SC_Fork))
-    {
-	DEBUG('a', "Fork System Call.\n");
-	syscallFork();
-	updateCounter();
-    }
-    else if ((which == SyscallException) && (type == SC_Exec)) 
-    {
-	DEBUG('a', "Exec System Call.\n");
-	syscallExec();
-    }
-    else if ((which == SyscallException) && (type == SC_Join)) 
-    {
-	DEBUG('a', "Join System Call.\n");
-	syscallJoin();
-	updateCounter();
-    }
-    else if((which == SyscallException) && (type ==SC_Kill))
-    { 
-	DEBUG('a', "Kill System Call.\n");
-	syscallKill();
-	updateCounter();
-    }
-    else if(which == PageFaultException)
-    { 
-	DEBUG('d', "Page Fault Exception occurred!\n");
+    if ((which == SyscallException) && (type == SC_Halt)) {
+        DEBUG('a', "Shutdown, initiated by user program.\n");
+        syscallHalt();
+    } else if ((which == SyscallException) && (type == SC_Yield)) {
+        DEBUG('a', "Yield System Call.\n");
+        syscallYield();
+        updateCounter();
+    } else if ((which == SyscallException) && (type == SC_Exit)) {
+        DEBUG('a', "Exit System Call.\n");
+        syscallExit();
+    } else if ((which == SyscallException) && (type == SC_Fork)) {
+        DEBUG('a', "Fork System Call.\n");
+        syscallFork();
+        updateCounter();
+    } else if ((which == SyscallException) && (type == SC_Exec)) {
+        DEBUG('a', "Exec System Call.\n");
+        syscallExec();
+    } else if ((which == SyscallException) && (type == SC_Join)) {
+        DEBUG('a', "Join System Call.\n");
+        syscallJoin();
+        updateCounter();
+    } else if ((which == SyscallException) && (type == SC_Kill)) {
+        DEBUG('a', "Kill System Call.\n");
+        syscallKill();
+        updateCounter();
+    } else if (which == PageFaultException) {
+        DEBUG('d', "Page Fault Exception occurred!\n");
         int vpn = machine->ReadRegister(BadVAddrReg);
-	handlePageFaultException(vpn);
-    }
-    else 
-    {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(FALSE);
+        handlePageFaultException(vpn);
+    } else {
+        printf("Unexpected user mode exception %d %d\n", which, type);
+        ASSERT(FALSE);
     }
 }
 
-void updateCounter()
-{
+void updateCounter() {
     int counter;
     counter = machine->ReadRegister(PCReg);
     counter += 4;
-    machine->WriteRegister(PrevPCReg, counter-4);
+    machine->WriteRegister(PrevPCReg, counter - 4);
     machine->WriteRegister(PCReg, counter);
-    machine->WriteRegister(NextPCReg, counter+4);
+    machine->WriteRegister(NextPCReg, counter + 4);
 }
 
-int syscallExec()
-{
+int syscallExec() {
 
     printf("Syscall Call: [%d] invoked Exec.\n", currentThread->space->getPID());
 
@@ -137,135 +117,116 @@ int syscallExec()
     currentThread->space->getString(fileName, virtualAd);
 
 
-    OpenFile *fileRead = fileSystem->Open(fileName); 
-    if(fileRead  == NULL) 
-    {
-	printf("Unable to open file %s\n", fileName);
-	updateCounter();
-	machine->WriteRegister(2,-1);
-	return -1;
-    }
-    else
-    {
-	currentThread->space->execThread(fileRead);
+    OpenFile *fileRead = fileSystem->Open(fileName);
+    if (fileRead == NULL) {
+        printf("Unable to open file %s\n", fileName);
+        updateCounter();
+        machine->WriteRegister(2, -1);
+        return -1;
+    } else {
+        currentThread->space->execThread(fileRead);
 
-	if(currentThread->space->check() == false)
-	{ 
-	    updateCounter();
-	    return -1; 
-	}
+        if (currentThread->space->check() == false) {
+            updateCounter();
+            return -1;
+        }
 
-	printf("Exec Program: [%d] loading [%s]\n", currentThread->space->getPID(), fileName);
-	machine->WriteRegister(2,1);
-	return 1;
+        printf("Exec Program: [%d] loading [%s]\n", currentThread->space->getPID(), fileName);
+        machine->WriteRegister(2, 1);
+        return 1;
     }
 }
 
-
-void syscallHalt()
-{
-        printf("Syscall Call: [%d] invoked call Halt.\n", currentThread->space->getPID());
-   	interrupt->Halt();
+void syscallHalt() {
+    printf("Syscall Call: [%d] invoked call Halt.\n", currentThread->space->getPID());
+    interrupt->Halt();
 }
 
-void syscallYield()
-{
+void syscallYield() {
     printf("System Call: [%d] invoked Yield.\n", currentThread->space->getPID());
     currentThread->Yield();
 }
 
-int syscallKill()
-{
+int syscallKill() {
     int i, killID, index;
     pcb* killPCB;
-    printf("System Call: [%d] invoked Kill.\n", currentThread->space->getPID()); 
+    printf("System Call: [%d] invoked Kill.\n", currentThread->space->getPID());
 
 
     killID = machine->ReadRegister(4);
 
     //if its not a valid ID, return error
-    if(!pcbMan->validPID(killID))
-    {
-	printf("Process [%d] cannot kill process [%d]: doesn't exist\n", currentThread->space->getPID(), killID); 
-	machine->WriteRegister(2,-1);
-    	return -1;
-    }
-    else if(currentThread == (pcbMan->getThisPCB(killID))->returnThread())
-    {
-	syscallExit();
-	machine->WriteRegister(2,0);
+    if (!pcbMan->validPID(killID)) {
+        printf("Process [%d] cannot kill process [%d]: doesn't exist\n", currentThread->space->getPID(), killID);
+        machine->WriteRegister(2, -1);
+        return -1;
+    } else if (currentThread == (pcbMan->getThisPCB(killID))->returnThread()) {
+        syscallExit();
+        machine->WriteRegister(2, 0);
         index = killID;
-	return 0;
-    }
-    else
-    {
+        return 0;
+    } else {
 
-    	//get a pointer to the pcb of the process to be killed
-    	killPCB = pcbMan->getThisPCB(killID);
+        //get a pointer to the pcb of the process to be killed
+        killPCB = pcbMan->getThisPCB(killID);
         index = killID;
 
- 	//if this process has children, set their parent pointers to null
-    	if(killPCB->numberChildren() > 0)
-    	{
-    		killPCB->setParentsNull();
-    	}
+        //if this process has children, set their parent pointers to null
+        if (killPCB->numberChildren() > 0) {
+            killPCB->setParentsNull();
+        }
 
-    	//if this process has a parent, remove itself from the childManager  
-    
-    	if(killPCB->getParent() != NULL)
-    	{
-    		killPCB->getParent()->removeChild(killID);
-    	}
+        //if this process has a parent, remove itself from the childManager  
 
-    	//remove itself from the pcbManager and PID manager
-    	pcbMan->removePCB(killID);
-    	pid_manager->removePid(killID);
+        if (killPCB->getParent() != NULL) {
+            killPCB->getParent()->removeChild(killID);
+        }
 
-	//free up the memory
-    	AddrSpace *tempAd = killPCB->getAddrSpace();
-    	TranslationEntry *tempPage = tempAd->getPageTable();
-    	for(i=0; i < tempAd->getNumPages(); i++)
-    	{
-		mans_man->deallocate(tempPage[i].physicalPage);
-    	}
+        //remove itself from the pcbManager and PID manager
+        pcbMan->removePCB(killID);
+        pid_manager->removePid(killID);
 
-	//check open files and delete them 
+        //free up the memory
+        AddrSpace *tempAd = killPCB->getAddrSpace();
+        TranslationEntry *tempPage = tempAd->getPageTable();
+        for (i = 0; i < tempAd->getNumPages(); i++) {
+            mans_man->deallocate(tempPage[i].physicalPage);
+        }
+
+        //check open files and delete them 
 
         //Remove Thread from Scheduler and delete it
-	Thread* killThread = killPCB->returnThread();
-	scheduler->RemoveThisThread(killThread);
+        Thread* killThread = killPCB->returnThread();
+        scheduler->RemoveThisThread(killThread);
         index = 0;
-    	delete tempAd;
+        delete tempAd;
 
-    	printf("Process [%d] killed process [%d]\n", currentThread->space->getPID(), killID);
-	machine->WriteRegister(2,0);
-	return 0;
+        printf("Process [%d] killed process [%d]\n", currentThread->space->getPID(), killID);
+        machine->WriteRegister(2, 0);
+        return 0;
     }
 
 }
 
-void syscallExit()
-{
-    
+void syscallExit() {
+
     int i, id, exVal, index;
-    printf("System Call: [%d] invoked Exit.\n", currentThread->space->getPID()); 
+    printf("System Call: [%d] invoked Exit.\n", currentThread->space->getPID());
     exVal = machine->ReadRegister(4);
 
     //if this process has children, set their parent pointers to null
-    if(currentThread->space->getPCB()->numberChildren() > 0)
-    {
-    	currentThread->space->getPCB()->setParentsNull();
+    if (currentThread->space->getPCB()->numberChildren() > 0) {
+        currentThread->space->getPCB()->setParentsNull();
         index = exVal;
     }
 
     //if this process has a parent, remove itself from the childManager and set exit value to parent 
-    id = currentThread->space->getPID(); 
+    id = currentThread->space->getPID();
 
-    
-    if(currentThread->space->getPCB()->getParent() != NULL)
-    {
-    	currentThread->space->getPCB()->getParent()->removeChild(id);
-	currentThread->space->getPCB()->getParent()->setChildExitValue(exVal);
+
+    if (currentThread->space->getPCB()->getParent() != NULL) {
+        currentThread->space->getPCB()->getParent()->removeChild(id);
+        currentThread->space->getPCB()->getParent()->setChildExitValue(exVal);
         index = id;
     }
 
@@ -275,9 +236,8 @@ void syscallExit()
 
     AddrSpace *tempAd = currentThread->space;
     TranslationEntry *tempPage = tempAd->getPageTable();
-    for(i=0; i < tempAd->getNumPages(); i++)
-    {
-	mans_man->deallocate(tempPage[i].physicalPage);
+    for (i = 0; i < tempAd->getNumPages(); i++) {
+        mans_man->deallocate(tempPage[i].physicalPage);
     }
 
     printf("Process [%d] exits with [%d]\n", id, exVal);
@@ -285,57 +245,47 @@ void syscallExit()
     //if this is the last process, then just exit
     delete tempAd;
     currentThread->Finish();
-} 
+}
 
-int syscallJoin()
-{
+int syscallJoin() {
     int id;
     int index;
-    printf("System Call: [%d] invoked Join.\n", currentThread->space->getPID()); 
+    printf("System Call: [%d] invoked Join.\n", currentThread->space->getPID());
     id = machine->ReadRegister(4);
-     
-    if(currentThread->space->getPCB()->getParent() != NULL) 
-    {
-	if(currentThread->space->getPCB()->getParent()->getID() == id)
-	{
-	        machine->WriteRegister(2, -1);
-		return -1;
-	}
-    }
-    else if(currentThread->space->getPCB()->checkForChild(id))
-    {
+
+    if (currentThread->space->getPCB()->getParent() != NULL) {
+        if (currentThread->space->getPCB()->getParent()->getID() == id) {
+            machine->WriteRegister(2, -1);
+            return -1;
+        }
+    } else if (currentThread->space->getPCB()->checkForChild(id)) {
         index = id;
-        while(currentThread->space->getPCB()->checkForChild(id))
-    	{
-		currentThread->Yield();
-    	}
+        while (currentThread->space->getPCB()->checkForChild(id)) {
+            currentThread->Yield();
+        }
         machine->WriteRegister(2, currentThread->space->getPCB()->getChildExitValue());
-	return (currentThread->space->getPCB()->getChildExitValue());
-    }
-    else
-    {
+        return (currentThread->space->getPCB()->getChildExitValue());
+    } else {
         machine->WriteRegister(2, -1);
     }
 
-    return -1; 
-    
+    return -1;
+
 }
 
-void helpFork(int i)
-{
+void helpFork(int i) {
     currentThread->space->RestoreReg();
     currentThread->space->RestoreState();
     machine->Run();
 }
 
-int syscallFork()
-{
+int syscallFork() {
 
     unsigned int oldPC, oldPrevPC, oldNextPC;
     unsigned int index;
     currentThread->space->SaveReg();
 
-    printf("System Call: [%d] invoked Fork.\n", currentThread->space->getPID()); 
+    printf("System Call: [%d] invoked Fork.\n", currentThread->space->getPID());
 
     AddrSpace *tempAd = new AddrSpace();
 
@@ -346,10 +296,9 @@ int syscallFork()
     currentThread->space->copyMemory(tempAd);
 
     //if there isn't enough memory for the child process, check will return false, and fork will quit
-    if(!tempAd->check())
-    {
+    if (!tempAd->check()) {
         machine->WriteRegister(2, -1);
-	return -1;
+        return -1;
     }
 
     memLock->Acquire();
@@ -357,19 +306,19 @@ int syscallFork()
     oldPrevPC = machine->ReadRegister(PrevPCReg);
     oldNextPC = machine->ReadRegister(NextPCReg);
     index = oldPC;
-    machine->WriteRegister(PCReg, machine->ReadRegister(4)); 
-    machine->WriteRegister(PrevPCReg, machine->ReadRegister(4)-4); 
-    machine->WriteRegister(NextPCReg, machine->ReadRegister(4)+4); 
-    
-    tempAd->SaveReg();
-    t->Fork(helpFork,1);
+    machine->WriteRegister(PCReg, machine->ReadRegister(4));
+    machine->WriteRegister(PrevPCReg, machine->ReadRegister(4) - 4);
+    machine->WriteRegister(NextPCReg, machine->ReadRegister(4) + 4);
 
-    machine->WriteRegister(PCReg, oldPC); 
-    machine->WriteRegister(PrevPCReg, oldPrevPC); 
-    machine->WriteRegister(NextPCReg, oldNextPC); 
+    tempAd->SaveReg();
+    t->Fork(helpFork, 1);
+
+    machine->WriteRegister(PCReg, oldPC);
+    machine->WriteRegister(PrevPCReg, oldPrevPC);
+    machine->WriteRegister(NextPCReg, oldNextPC);
 
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n", currentThread->space->getPID(), machine->ReadRegister(4), currentThread->space->getNumPages());
-    
+
 
     currentThread->space->RestoreReg();
 
@@ -378,9 +327,8 @@ int syscallFork()
     return tempAd->getPID();
 }
 
-void handlePageFaultException(int vpn)
-{
+void handlePageFaultException(int vpn) {
     DEBUG('d', "Handling the Page Fault Exception...\n");
-    
+
 }
 

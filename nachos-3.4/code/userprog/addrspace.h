@@ -19,23 +19,23 @@
 class pcb;
 
 
-#define UserStackSize		1024 	// increase this as necessary!
+#define UserStackSize  1024  // increase this as necessary!
 
 class AddrSpace {
-  public:
-    
+public:
+
     AddrSpace();
-    AddrSpace(OpenFile *executable);	// Create an address space,
-					// initializing it with the program
-					// stored in the file "executable"
-    ~AddrSpace();			// De-allocate an address space
+    AddrSpace(OpenFile *executable); // Create an address space,
+    // initializing it with the program
+    // stored in the file "executable"
+    ~AddrSpace(); // De-allocate an address space
 
-    AddrSpace( const AddrSpace &input);
+    AddrSpace(const AddrSpace &input);
 
-    void InitRegisters();		// Initialize user-level CPU registers,
-					// before jumping to user code
-    void SaveState();			// Save/restore address space-specific
-    void RestoreState();		// info on a context switch 
+    void InitRegisters(); // Initialize user-level CPU registers,
+    // before jumping to user code
+    void SaveState(); // Save/restore address space-specific
+    void RestoreState(); // info on a context switch 
     void setPCB(pcb *input);
     pcb* getPCB();
     int getPID();
@@ -51,12 +51,12 @@ class AddrSpace {
     void execThread(OpenFile * executable);
     unsigned int myTranslate(int virtAddr);
 
-  private:
+private:
     bool worked;
-    TranslationEntry *pageTable;	// Assume linear page table translation
-					// for now!
-    unsigned int numPages;		// Number of pages in the virtual 
-					// address space
+    TranslationEntry *pageTable; // Assume linear page table translation
+    // for now!
+    unsigned int numPages; // Number of pages in the virtual 
+    // address space
     int pageIndex;
     pcb* thisPCB;
     int regArray[NumTotalRegs];

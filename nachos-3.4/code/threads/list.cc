@@ -27,11 +27,10 @@
 //	"sortKey" is the priority of the item, if any.
 //----------------------------------------------------------------------
 
-ListElement::ListElement(void *itemPtr, int sortKey)
-{
-     item = itemPtr;
-     key = sortKey;
-     next = NULL;	// assume we'll put it at the end of the list 
+ListElement::ListElement(void *itemPtr, int sortKey) {
+    item = itemPtr;
+    key = sortKey;
+    next = NULL; // assume we'll put it at the end of the list 
 }
 
 //----------------------------------------------------------------------
@@ -40,9 +39,8 @@ ListElement::ListElement(void *itemPtr, int sortKey)
 //	Elements can now be added to the list.
 //----------------------------------------------------------------------
 
-List::List()
-{ 
-    first = last = NULL; 
+List::List() {
+    first = last = NULL;
 }
 
 //----------------------------------------------------------------------
@@ -55,10 +53,9 @@ List::List()
 //	de-allocate them here.
 //----------------------------------------------------------------------
 
-List::~List()
-{ 
+List::~List() {
     while (Remove() != NULL)
-	;	 // delete all the list elements
+        ; // delete all the list elements
 }
 
 //----------------------------------------------------------------------
@@ -74,16 +71,15 @@ List::~List()
 //----------------------------------------------------------------------
 
 void
-List::Append(void *item)
-{
+List::Append(void *item) {
     ListElement *element = new ListElement(item, 0);
 
-    if (IsEmpty()) {		// list is empty
-	first = element;
-	last = element;
-    } else {			// else put it after last
-	last->next = element;
-	last = element;
+    if (IsEmpty()) { // list is empty
+        first = element;
+        last = element;
+    } else { // else put it after last
+        last->next = element;
+        last = element;
     }
 }
 
@@ -100,16 +96,15 @@ List::Append(void *item)
 //----------------------------------------------------------------------
 
 void
-List::Prepend(void *item)
-{
+List::Prepend(void *item) {
     ListElement *element = new ListElement(item, 0);
 
-    if (IsEmpty()) {		// list is empty
-	first = element;
-	last = element;
-    } else {			// else put it before first
-	element->next = first;
-	first = element;
+    if (IsEmpty()) { // list is empty
+        first = element;
+        last = element;
+    } else { // else put it before first
+        element->next = first;
+        first = element;
     }
 }
 
@@ -122,9 +117,8 @@ List::Prepend(void *item)
 //----------------------------------------------------------------------
 
 void *
-List::Remove()
-{
-    return SortedRemove(NULL);  // Same as SortedRemove, but ignore the key
+List::Remove() {
+    return SortedRemove(NULL); // Same as SortedRemove, but ignore the key
 }
 
 //----------------------------------------------------------------------
@@ -138,11 +132,10 @@ List::Remove()
 //----------------------------------------------------------------------
 
 void
-List::Mapcar(VoidFunctionPtr func)
-{
+List::Mapcar(VoidFunctionPtr func) {
     for (ListElement *ptr = first; ptr != NULL; ptr = ptr->next) {
-       DEBUG('l', "In mapcar, about to invoke %x(%x)\n", func, ptr->item);
-       (*func)((int)ptr->item);
+        DEBUG('l', "In mapcar, about to invoke %x(%x)\n", func, ptr->item);
+        (*func)((int) ptr->item);
     }
 }
 
@@ -152,12 +145,11 @@ List::Mapcar(VoidFunctionPtr func)
 //----------------------------------------------------------------------
 
 bool
-List::IsEmpty() 
-{ 
+List::IsEmpty() {
     if (first == NULL)
         return TRUE;
     else
-	return FALSE; 
+        return FALSE;
 }
 
 //----------------------------------------------------------------------
@@ -176,28 +168,27 @@ List::IsEmpty()
 //----------------------------------------------------------------------
 
 void
-List::SortedInsert(void *item, int sortKey)
-{
+List::SortedInsert(void *item, int sortKey) {
     ListElement *element = new ListElement(item, sortKey);
-    ListElement *ptr;		// keep track
+    ListElement *ptr; // keep track
 
-    if (IsEmpty()) {	// if list is empty, put
+    if (IsEmpty()) { // if list is empty, put
         first = element;
         last = element;
-    } else if (sortKey < first->key) {	
-		// item goes on front of list
-	element->next = first;
-	first = element;
-    } else {		// look for first elt in list bigger than item
+    } else if (sortKey < first->key) {
+        // item goes on front of list
+        element->next = first;
+        first = element;
+    } else { // look for first elt in list bigger than item
         for (ptr = first; ptr->next != NULL; ptr = ptr->next) {
             if (sortKey < ptr->next->key) {
-		element->next = ptr->next;
-	        ptr->next = element;
-		return;
-	    }
-	}
-	last->next = element;		// item goes at end of list
-	last = element;
+                element->next = ptr->next;
+                ptr->next = element;
+                return;
+            }
+        }
+        last->next = element; // item goes at end of list
+        last = element;
     }
 }
 
@@ -215,18 +206,17 @@ List::SortedInsert(void *item, int sortKey)
 //----------------------------------------------------------------------
 
 void *
-List::SortedRemove(int *keyPtr)
-{
+List::SortedRemove(int *keyPtr) {
     ListElement *element = first;
     void *thing;
 
-    if (IsEmpty()) 
-	return NULL;
+    if (IsEmpty())
+        return NULL;
 
     thing = first->item;
-    if (first == last) {	// list had one item, now has none 
+    if (first == last) { // list had one item, now has none 
         first = NULL;
-	last = NULL;
+        last = NULL;
     } else {
         first = element->next;
     }
@@ -237,11 +227,11 @@ List::SortedRemove(int *keyPtr)
 }
 
 //External code
+
 void*
-List:: Top()
-{
-    if(IsEmpty())
-	return NULL;
+List::Top() {
+    if (IsEmpty())
+        return NULL;
 
     return first->item;
 }

@@ -86,28 +86,28 @@ typedef void *__gnuc_va_list;
   (((sizeof (TYPE) + sizeof (int) - 1) / sizeof (int)) * sizeof (int))
 #endif
 
-#define va_start(AP, LASTARG) 						\
+#define va_start(AP, LASTARG)       \
  (AP = ((__gnuc_va_list) __builtin_next_arg (LASTARG)))
 
 #undef va_end
-void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
-#define va_end(AP)	((void)0)
+void va_end(__gnuc_va_list); /* Defined in libgcc.a */
+#define va_end(AP) ((void)0)
 
 /* We cast to void * and then to TYPE * because this avoids
    a warning about increasing the alignment requirement.  */
 
 #if (defined (__arm__) && ! defined (__ARMEB__)) || defined (__i386__) || defined (__i860__) || defined (__ns32000__) || defined (__vax__)
 /* This is for little-endian machines; small args are padded upward.  */
-#define va_arg(AP, TYPE)						\
- (AP = (__gnuc_va_list) ((char *) (AP) + __va_rounded_size (TYPE)),	\
+#define va_arg(AP, TYPE)      \
+ (AP = (__gnuc_va_list) ((char *) (AP) + __va_rounded_size (TYPE)), \
   *((TYPE *) (void *) ((char *) (AP) - __va_rounded_size (TYPE))))
 #else /* big-endian */
 /* This is for big-endian machines; small args are padded downward.  */
-#define va_arg(AP, TYPE)						\
- (AP = (__gnuc_va_list) ((char *) (AP) + __va_rounded_size (TYPE)),	\
-  *((TYPE *) (void *) ((char *) (AP)					\
-		       - ((sizeof (TYPE) < __va_rounded_size (char)	\
-			   ? sizeof (TYPE) : __va_rounded_size (TYPE))))))
+#define va_arg(AP, TYPE)      \
+ (AP = (__gnuc_va_list) ((char *) (AP) + __va_rounded_size (TYPE)), \
+  *((TYPE *) (void *) ((char *) (AP)     \
+                       - ((sizeof (TYPE) < __va_rounded_size (char) \
+                           ? sizeof (TYPE) : __va_rounded_size (TYPE))))))
 #endif /* big-endian */
 
 /* Copy __gnuc_va_list into another variable of this type.  */

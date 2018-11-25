@@ -21,8 +21,7 @@
 //----------------------------------------------------------------------
 
 void
-StartProcess(char *filename)
-{
+StartProcess(char *filename) {
 
     //printf("got in start process in progtest.cc\n");
     OpenFile *executable = fileSystem->Open(filename);
@@ -30,31 +29,30 @@ StartProcess(char *filename)
 
     AddrSpace *space;
     if (executable == NULL) {
-	printf("Unable to open file %s\n", filename);
-	return;
+        printf("Unable to open file %s\n", filename);
+        return;
     }
 
     //printf("before creating a new space\n");
-    space = new AddrSpace(executable);    
+    space = new AddrSpace(executable);
     //printf("created space in progtest.cc\n");
 
-    if(!space->check())
-    {
-	return;
+    if (!space->check()) {
+        return;
     }
 
     currentThread->space = space;
     space->getPCB()->setThread(currentThread);
 
-    delete executable;			// close file
+    delete executable; // close file
 
-    space->InitRegisters();		// set the initial register values
-    space->RestoreState();		// load page table register
+    space->InitRegisters(); // set the initial register values
+    space->RestoreState(); // load page table register
 
-    machine->Run();			// jump to the user progam
-    ASSERT(FALSE);			// machine->Run never returns;
-					// the address space exits
-					// by doing the syscall "exit"
+    machine->Run(); // jump to the user progam
+    ASSERT(FALSE); // machine->Run never returns;
+    // the address space exits
+    // by doing the syscall "exit"
 }
 
 // Data structures needed for the console test.  Threads making
@@ -69,8 +67,13 @@ static Semaphore *writeDone;
 // 	Wake up the thread that requested the I/O.
 //----------------------------------------------------------------------
 
-static void ReadAvail(int arg) { readAvail->V(); }
-static void WriteDone(int arg) { writeDone->V(); }
+static void ReadAvail(int arg) {
+    readAvail->V();
+}
+
+static void WriteDone(int arg) {
+    writeDone->V();
+}
 
 //----------------------------------------------------------------------
 // ConsoleTest
@@ -78,20 +81,19 @@ static void WriteDone(int arg) { writeDone->V(); }
 //	the output.  Stop when the user types a 'q'.
 //----------------------------------------------------------------------
 
-void 
-ConsoleTest (char *in, char *out)
-{
+void
+ConsoleTest(char *in, char *out) {
     char ch;
 
     console = new Console(in, out, ReadAvail, WriteDone, 0);
     readAvail = new Semaphore("read avail", 0);
     writeDone = new Semaphore("write done", 0);
-    
+
     for (;;) {
-	readAvail->P();		// wait for character to arrive
-	ch = console->GetChar();
-	console->PutChar(ch);	// echo it!
-	writeDone->P() ;        // wait for write to finish
-	if (ch == 'q') return;  // if q, quit
+        readAvail->P(); // wait for character to arrive
+        ch = console->GetChar();
+        console->PutChar(ch); // echo it!
+        writeDone->P(); // wait for write to finish
+        if (ch == 'q') return; // if q, quit
     }
 }
