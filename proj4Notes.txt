@@ -77,17 +77,24 @@ As a part of raising the Exception, the processor saves the faulting virtual add
 
 Note that, at this point, this mechanism is not exercised by program execution as processes are loaded in their entirety and no page faults are generated
 	
-	????
+	Assuming project 2 solution baseline, a program pages will always be loaded in its entirety into memory and it will always fit in memory.
 	
 	
 Stage 4
 ==========
 Figure out how to start a process with none of its pages in memory. For this, you will need to change the code that you wrote inProject 2 for process creation. 
 	
-	????
+	Comment out the everything including and below the follwing in addrspace.cc:
+		if (numPages > (unsigned) mans_man->getPages()) {
+			printf("Not Enough Memory for Process %d\n", this->getPID());
+			worked = false;
+			return;
+		}
+	
+	..but keep pageTable = new TranslationEntry[numPages];
 	
 You may also need to modify the pagetable structure (in theTranslationEntry class) to keep track of pages that are not in memory. Note that you are free to add fields to the this structure (as long as you don't disturb the existing fields).
 
-	
+	Just add to machine/translate.h
 
 You will need to keep track of the location from which disk-resident pages are to be loaded. Remember that, initially the pages of a process are all in the executable file. Once a page has been brought in to memory, any subsequent flush of this page to disk (during page replacement) should be to backing store (this storage will be created in Stage 6) and not to the executable file. You will also need to allocate space in the backing store for the pages of this process. You can choose to be conservative and allocate space for the entire virtual address space of the process on the backing store at creation time. You can be even more conservative and choose to copy the entire executable file into the allocated space at startup. If you did this, you would need to only concern yourself with moving pages between backing store and the memory during page fault handling. This is only a suggestion. Alternate implementations are more than welcome - you can get up to 10 extra points.

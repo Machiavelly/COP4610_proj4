@@ -79,7 +79,8 @@ USERPROG_H = ../userprog/addrspace.h\
 	../userprog/pid.h\
 	../userprog/pcb.h\
 	../userprog/memMan.h\
-	../userprog/pcbManager.h
+	../userprog/pcbManager.h\
+	../userprog/backingstore.h
 
 USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/bitmap.cc\
@@ -92,10 +93,11 @@ USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/pid.cc\
 	../userprog/memMan.cc\
 	../userprog/pcb.cc\
-	../userprog/pcbManager.cc
+	../userprog/pcbManager.cc\
+	../userprog/backingstore.cc
 
 USERPROG_O = addrspace.o bitmap.o exception.o progtest.o console.o machine.o \
-	mipssim.o translate.o pid.o memMan.o pcb.o pcbManager.o  
+	mipssim.o translate.o pid.o memMan.o pcb.o pcbManager.o backingstore.o
 
 VM_H = 
 VM_C = 

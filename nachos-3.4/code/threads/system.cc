@@ -155,6 +155,7 @@ Initialize(int argc, char **argv) {
     machine = new Machine(debugUserProg); // this must come first
     pid_manager = new pid();
     mans_man = new memMan();
+    DEBUG('d', "\nAllocating mans_man!\n");
     memLock = new Lock("memory lock");
     pcbMan = new pcbManager();
 #endif

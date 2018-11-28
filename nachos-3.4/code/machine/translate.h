@@ -40,6 +40,8 @@ public:
     // page is referenced or modified.
     bool dirty; // This bit is set by the hardware every time the
     // page is modified.
+    bool isInMemory; //This bit is set to true when a page resides in main mem
+    int bsOffset; //Describes where this file exists in the backing store, if 
 };
 
 #endif
