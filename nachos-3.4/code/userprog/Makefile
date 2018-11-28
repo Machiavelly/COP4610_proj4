@@ -609,6 +609,20 @@ pcbManager.o: ../userprog/pcbManager.cc ../userprog/pcbManager.h \
   ../userprog/../threads/synch.h ../userprog/../threads/thread.h \
   ../userprog/../threads/list.h  \
   ../userprog/addrspace.h
+backingstore.o: ../filesys/directory.cc ../threads/copyright.h \
+  ../threads/utility.h ../threads/copyright.h ../machine/sysdep.h \
+  ../threads/copyright.h /usr/include/stdio.h /usr/include/features.h \
+  /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h \
+  /usr/lib/gcc/i386-redhat-linux/3.4.6/include/stddef.h \
+  /usr/include/bits/types.h /usr/include/bits/wordsize.h \
+  /usr/include/bits/typesizes.h /usr/include/libio.h \
+  /usr/include/_G_config.h /usr/include/wchar.h /usr/include/bits/wchar.h \
+  /usr/include/gconv.h ../threads/stdarg.h /usr/include/bits/stdio_lim.h \
+  /usr/include/bits/sys_errlist.h /usr/include/string.h \
+  /usr/include/xlocale.h ../filesys/filehdr.h ../machine/disk.h \
+  ../threads/utility.h ../userprog/bitmap.h ../threads/copyright.h \
+  ../threads/utility.h ../filesys/openfile.h ../filesys/directory.h \
+  ../filesys/openfile.h
 # DEPENDENCIES MUST END AT END OF FILE
 # IF YOU PUT STUFF HERE IT WILL GO AWAY
 # see make depend above
