@@ -19,6 +19,7 @@
 #include "system.h"
 #include "addrspace.h"
 #include "noff.h"
+#include "backingstore.h"
 #ifdef HOST_SPARC
 #include <strings.h>
 #endif
@@ -91,27 +92,14 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
     // how big is address space?
-    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size
-            + UserStackSize; // we need to increase the size
-    // to leave room for the stack
+    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size;
+            + UserStackSize; // we need to increase the size to leave room for the stack
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    printf("Loaded Program: [%d] code | [%d] data | [%d] bss\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size);
-
-    //REMOVE this if uncommenting the block below
-    pageTable = new TranslationEntry[numPages];
+    backingStore = new BackingStore(currentThread->space->getPID(), numPages);
     
-    //REMOVED so that program initially loads with no pages in memory. Together with instantiating the pageTable variable above,
-    //this will cause an infinite loop of PageFaultException to occur when running a user prog
-    /*
-    //test that there are enough pages left for this process
-    if (numPages > (unsigned) mans_man->getPages()) {
-        printf("Not Enough Memory for Process %d\n", this->getPID());
-        worked = false;
-        return;
-    }
-
+    printf("Loaded Program: [%d] code | [%d] data | [%d] bss\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size);
 
     DEBUG('d', "\tInitializing address space, num pages %d, size %d\n",
             numPages, size);
@@ -159,7 +147,6 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     }
 
     memLock->Release();
-     * */
 }
 
 

@@ -37,6 +37,7 @@ void memMan::deallocate(int pageNum) {
 }
 
 int memMan::getPages() {
+    DEBUG('d', "\n\tVariables in mans_man: NumPhysPages:%d, numPages:%d\n", NumPhysPages, numPages);
     return (NumPhysPages - numPages);
 }
 

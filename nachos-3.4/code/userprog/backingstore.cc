@@ -3,7 +3,7 @@
 
 BackingStore::BackingStore(int pid, int numPages) {
     fileName = new char[11];
-    sprintf(fileName, "%d", pid);
+    sprintf(fileName, "bs_%d", pid);
     fileSystem->Create(fileName, numPages * PageSize);
     backingStore = fileSystem->Open(fileName);
     usedPages = new BitMap(numPages);

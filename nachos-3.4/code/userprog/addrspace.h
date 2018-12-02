@@ -62,6 +62,7 @@ private:
     int regArray[NumTotalRegs];
     //page swapping
     OpenFile* executableFile;
+    BackingStore* backingStore;
 };
 
 #endif // ADDRSPACE_H
