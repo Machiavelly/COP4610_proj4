@@ -60,6 +60,8 @@ private:
     int pageIndex;
     pcb* thisPCB;
     int regArray[NumTotalRegs];
+    //page swapping
+    OpenFile* executableFile;
 };
 
 #endif // ADDRSPACE_H

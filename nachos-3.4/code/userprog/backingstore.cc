@@ -41,6 +41,9 @@ void BackingStore::MovePageToMemory(TranslationEntry* entry) {
     int bsPage = entry->bsOffset / PageSize;
     ASSERT(usedPages->Test(bsPage));
     int physAddr = entry->physicalPage * PageSize;
+    int offset = entry->virtualPage * PageSize;
 
-    backingStore->ReadAt(&machine->mainMemory[physAddr], PageSize, entry->bsOffset);
+    backingStore->ReadAt(&machine->mainMemory[physAddr], 
+            PageSize, 
+            offset);
 }

@@ -70,7 +70,7 @@ AddrSpace::AddrSpace() {
 }
 
 AddrSpace::AddrSpace(OpenFile *executable) {
-
+    
     NoffHeader noffH;
     unsigned int i, size;
     worked = true;
@@ -80,6 +80,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     this->setPCB(thisPCB);
     pcbMan->assignPCB(thisPCB);
     worked = true;
+    executableFile = executable;
 
     int counter = 0;
     pageIndex = 0;

@@ -287,7 +287,7 @@ int syscallFork() {
 
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->getPID());
 
-    AddrSpace *tempAd = new AddrSpace();
+    AddrSpace *tempAd = new AddrSpace(); //TODO: Should this use the other AddrSpace constructor?
 
     Thread *t = new Thread("ForksThread");
     t->space = tempAd;
