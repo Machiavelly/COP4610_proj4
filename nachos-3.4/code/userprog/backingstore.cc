@@ -4,8 +4,11 @@
 BackingStore::BackingStore(int pid, int numPages) {
     fileName = new char[11];
     sprintf(fileName, "bs_%d", pid);
+    DEBUG('d',"BackingStore creating file...\n");
     fileSystem->Create(fileName, numPages * PageSize);
+    DEBUG('d',"BackingStore created file. BackingStore opening file...\n");
     backingStore = fileSystem->Open(fileName);
+    DEBUG('d',"BackingStore opened.\n");
     usedPages = new BitMap(numPages);
 }
 

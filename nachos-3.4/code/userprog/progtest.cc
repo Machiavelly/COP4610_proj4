@@ -23,18 +23,10 @@
 void
 StartProcess(char *filename) {
 
-    //printf("got in start process in progtest.cc\n");
-    OpenFile *executable = fileSystem->Open(filename);
-
-
     AddrSpace *space;
-    if (executable == NULL) {
-        printf("Unable to open file %s\n", filename);
-        return;
-    }
-
+    
     //printf("before creating a new space\n");
-    space = new AddrSpace(executable);
+    space = new AddrSpace(filename);
     //printf("created space in progtest.cc\n");
 
     if (!space->check()) {
@@ -44,7 +36,7 @@ StartProcess(char *filename) {
     currentThread->space = space;
     space->getPCB()->setThread(currentThread);
 
-    delete executable; // close file
+    //delete executable; // close file
 
     space->InitRegisters(); // set the initial register values
     space->RestoreState(); // load page table register

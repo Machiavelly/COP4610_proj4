@@ -330,7 +330,7 @@ int syscallFork() {
 void handlePageFaultException(int vpn) {
     DEBUG('d', "Handling the Page Fault Exception for vpn %d\n", vpn);
     memLock->Acquire();
-    
+    currentThread->space->LoadPhysPage(vpn);
     memLock->Release();
 }
 

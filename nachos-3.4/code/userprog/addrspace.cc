@@ -71,22 +71,28 @@ AddrSpace::AddrSpace() {
     pageIndex = 0;
 }
 
-AddrSpace::AddrSpace(OpenFile *executable) {
+AddrSpace::AddrSpace(char* fileName) {
     
     NoffHeader noffH;
     unsigned int i, size;
     worked = true;
 
+    //printf("got in start process in progtest.cc\n");
+    executableFile = fileSystem->Open(fileName);
+    if (executableFile == NULL) {
+        printf("Unable to open file %s\n", fileName);
+        return;
+    }
+    
     thisPCB = new pcb(currentThread);
     thisPCB->setAddrSpace(this);
     this->setPCB(thisPCB);
     pcbMan->assignPCB(thisPCB);
     worked = true;
-    this->executableFile = executable;
 
     int counter = 0;
     pageIndex = 0;
-    executable->ReadAt((char *) &noffH, sizeof (noffH), 0);
+    executableFile->ReadAt((char *) &noffH, sizeof (noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
@@ -122,40 +128,12 @@ AddrSpace::AddrSpace(OpenFile *executable) {
         pageTable[i].readOnly = FALSE;
         //bzero(machine->mainMemory + (pageTable[i].physicalPage * 128), PageSize);
     }
-
-    // Copy the code section into memory
-    counter = 0;
-    if (noffH.code.size > 0) {
-        DEBUG('d', "\tInitializing code segment, at 0x%x, size %d\n",
-                noffH.code.virtualAddr, noffH.code.size);
-
-        while (counter < noffH.code.size) {
-
-            executable->ReadAt(&(machine->mainMemory[myTranslate(noffH.code.virtualAddr + counter)]),
-                    1, noffH.code.inFileAddr + counter);
-            counter++;
-        }
-    }
-
-    // Copy the initialized data section
-    counter = 0;
-    if (noffH.initData.size > 0) {
-        DEBUG('d', "\tInitializing data segment, at 0x%x, size %d\n",
-                noffH.initData.virtualAddr, noffH.initData.size);
-        while (counter < noffH.initData.size) {
-
-            executable->ReadAt(&(machine->mainMemory[myTranslate(noffH.initData.virtualAddr + counter)]),
-                    1, noffH.initData.inFileAddr + counter);
-
-            counter++;
-        }
-    }
-
+    
     memLock->Release();
 }
 
 bool AddrSpace::LoadPhysPage(int vpn) {
-    int counter, ppn, victimPage;
+    int ppn, physAddr, victimPage, numCodePages, numInitDataPages, numUninitDataPages;
     
     memLock->Acquire();
     
@@ -170,43 +148,43 @@ bool AddrSpace::LoadPhysPage(int vpn) {
         DEBUG('d', "\tVPN %d - Need to find a victim page\n", vpn);
         victimPage = mans_man->findVictimPage();
         ASSERT(victimPage != -1); //then we could not find a victim page to evict
+        ASSERT(FALSE); //TODO: Don't worry about mem swaps right now
     }
     
-    if (1==1) {
-        return true;
+    pageTable[vpn].physicalPage = ppn;
+    physAddr = pageTable[vpn].physicalPage * PageSize;
+    
+    numCodePages = divRoundUp(noffHeader.code.size, PageSize);
+    numInitDataPages = divRoundUp(noffHeader.initData.size, PageSize);
+    numUninitDataPages = divRoundUp(noffHeader.uninitData.size, PageSize);
+    
+    DEBUG('d', "\tStarting to fill pages in memory. PPN = %d\n", ppn);
+    
+    if (vpn < numCodePages) { //if writing to code section
+        DEBUG('b', "\t\tCode - fileVirtAddr %d\n", noffHeader.code.virtualAddr);
+        executableFile->ReadAt(&(machine->mainMemory[physAddr]),
+            PageSize, noffHeader.code.inFileAddr);
+        pageTable[vpn].readOnly = TRUE;
+    } else if (vpn < numCodePages + numInitDataPages) { //initdata
+        DEBUG('b', "\t\tInitdata - fileVirtAddr %d\n", noffHeader.initData.virtualAddr);
+        executableFile->ReadAt(&(machine->mainMemory[physAddr]),
+            PageSize, noffHeader.initData.inFileAddr);
+    } else if (vpn < numCodePages + numInitDataPages + numUninitDataPages) { //uninitDat
+        DEBUG('b', "\t\tUninitdata\n");
+        bzero(&( machine->mainMemory[physAddr] ), PageSize);
+    } else { //other like stack or heap
+        DEBUG('b', "\t\tStack or Heap\n");
+        bzero(&( machine->mainMemory[physAddr] ), PageSize);
     }
     
-    // Copy the code section into memory
-    counter = 0;
-    if (noffHeader.code.size > 0) {
-        DEBUG('d', "\tInitializing code segment, at 0x%x, size %d\n",
-                noffHeader.code.virtualAddr, noffHeader.code.size);
-
-        while (counter < noffHeader.code.size) {
-
-            executableFile->ReadAt(&(machine->mainMemory[myTranslate(noffHeader.code.virtualAddr + counter)]),
-                    1, noffHeader.code.inFileAddr + counter);
-            counter++;
-        }
-    }
-
-    // Copy the initialized data section
-    counter = 0;
-    if (noffHeader.initData.size > 0) {
-        DEBUG('d', "\tInitializing data segment, at 0x%x, size %d\n",
-                noffHeader.initData.virtualAddr, noffHeader.initData.size);
-        while (counter < noffHeader.initData.size) {
-
-            executableFile->ReadAt(&(machine->mainMemory[myTranslate(noffHeader.initData.virtualAddr + counter)]),
-                    1, noffHeader.initData.inFileAddr + counter);
-
-            counter++;
-        }
-    }
+    pageTable[vpn].valid = TRUE;
+    pageTable[vpn].isInMemory = TRUE;
     
     memLock->Release();
     
-    return false; //virtual page could not be loaded into memory
+    DEBUG('d', "\tExiting LoadPhyPage\n");
+    
+    return FALSE; //virtual page could not be loaded into memory
 }
 
 //----------------------------------------------------------------------
@@ -217,6 +195,7 @@ bool AddrSpace::LoadPhysPage(int vpn) {
 AddrSpace::~AddrSpace() {
     delete thisPCB;
     delete pageTable;
+    delete executableFile;
 }
 
 //----------------------------------------------------------------------

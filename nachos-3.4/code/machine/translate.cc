@@ -98,6 +98,7 @@ Machine::ReadMem(int addr, int size, int *value) {
 
     exception = Translate(addr, &physicalAddress, size, FALSE);
     if (exception != NoException) {
+        DEBUG('d', "Exception occurred: exception %d, addr %d", exception, addr);
         machine->RaiseException(exception, addr);
         return FALSE;
     }
@@ -225,11 +226,11 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing) {
 
     if (tlb == NULL) { // => page table => vpn is index into table
         if (vpn >= pageTableSize) {
-            DEBUG('a', "virtual page # %d too large for page table size %d!\n",
+            DEBUG('a', "1.virtual page # %d too large for page table size %d!\n",
                     virtAddr, pageTableSize);
             return AddressErrorException;
         } else if (!pageTable[vpn].valid) {
-            DEBUG('a', "virtual page # %d too large for page table size %d!\n",
+            DEBUG('a', "2.virtual page # %d too large for page table size %d!\n",
                     virtAddr, pageTableSize);
             return PageFaultException;
         }
