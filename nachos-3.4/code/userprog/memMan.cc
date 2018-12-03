@@ -41,6 +41,7 @@ int memMan::getPages() {
     return (NumPhysPages - numPages);
 }
 
+//find next victim page using FIFO algorithm
 int memMan::findVictimPage() {
     int i;
     for (i = 0; i < NUM_PAGES; i++) {

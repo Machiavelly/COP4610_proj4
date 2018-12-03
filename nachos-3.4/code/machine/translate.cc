@@ -141,9 +141,23 @@ bool
 Machine::WriteMem(int addr, int size, int value) {
     ExceptionType exception;
     int physicalAddress;
+    int k;
 
     DEBUG('a', "Writing VA 0x%x, size %d, value 0x%x\n", addr, size, value);
-
+    
+    DEBUG('d', "\tPrinting pageTable entries...\n");
+    k = 0;
+    while (k++ < pageTableSize) {
+        DEBUG('D', "\n\n\t\t%d - virtualPage\n", pageTable[k].virtualPage);
+        DEBUG('D', "\t\t%d - physicalPage\n", pageTable[k].physicalPage);
+        DEBUG('D', "\t\t%d - valid\n", pageTable[k].valid);
+        DEBUG('D', "\t\t%d - use\n", pageTable[k].use);
+        DEBUG('D', "\t\t%d - dirty\n", pageTable[k].dirty);
+        DEBUG('D', "\t\t%d - readOnly\n", pageTable[k].readOnly);
+        DEBUG('D', "\t\t%d - isInMemory\n", pageTable[k].isInMemory);
+        DEBUG('D', "\t\t%d - bsOffset\n", pageTable[k].bsOffset);
+    }
+    
     exception = Translate(addr, &physicalAddress, size, TRUE);
     if (exception != NoException) {
         machine->RaiseException(exception, addr);
@@ -244,6 +258,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing) {
     // An invalid translation was loaded into the page table or TLB. 
     if (pageFrame >= NumPhysPages) {
         DEBUG('a', "*** frame %d > %d!\n", pageFrame, NumPhysPages);
+        DEBUG('d', "\tvirtPage %d\n", entry->virtualPage);
         return BusErrorException;
     }
     entry->use = TRUE; // set the use, dirty bits

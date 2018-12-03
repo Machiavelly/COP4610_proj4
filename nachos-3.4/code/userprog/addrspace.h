@@ -16,7 +16,11 @@
 #include "copyright.h"
 #include "filesys.h"
 #include "pcb.h"
+#include "backingstore.h"
+#include "noff.h"
+
 class pcb;
+class BackingStore;
 
 
 #define UserStackSize  1024  // increase this as necessary!
@@ -50,6 +54,8 @@ public:
     void getString(char * str, int virtAd);
     void execThread(OpenFile * executable);
     unsigned int myTranslate(int virtAddr);
+    //page swapping
+    bool AddrSpace::LoadVirtPage(int vpn);
 
 private:
     bool worked;
@@ -62,6 +68,7 @@ private:
     int regArray[NumTotalRegs];
     //page swapping
     OpenFile* executableFile;
+    NoffHeader noffHeader;
     BackingStore* backingStore;
 };
 

@@ -15,10 +15,11 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+#include <limits.h>
+
 #include "copyright.h"
 #include "system.h"
 #include "addrspace.h"
-#include "noff.h"
 #include "backingstore.h"
 #ifdef HOST_SPARC
 #include <strings.h>
@@ -81,7 +82,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     this->setPCB(thisPCB);
     pcbMan->assignPCB(thisPCB);
     worked = true;
-    executableFile = executable;
+    this->executableFile = executable;
 
     int counter = 0;
     pageIndex = 0;
@@ -91,13 +92,16 @@ AddrSpace::AddrSpace(OpenFile *executable) {
         SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
+    this->noffHeader = noffH;
+    
     // how big is address space?
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size;
             + UserStackSize; // we need to increase the size to leave room for the stack
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
-
-    backingStore = new BackingStore(currentThread->space->getPID(), numPages);
+    DEBUG('d', "\tAbout to allocate backingstore with PID %d and %d pages\n",
+            getPID(), numPages);
+    backingStore = new BackingStore(getPID(), numPages);
     
     printf("Loaded Program: [%d] code | [%d] data | [%d] bss\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size);
 
@@ -106,16 +110,17 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 
     memLock->Acquire();
 
+    DEBUG('d', "\tInside memLock of addrspace constructor\n");
     pageTable = new TranslationEntry[numPages];
     pageIndex = numPages;
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;
-        pageTable[i].physicalPage = mans_man->allocate();
-        pageTable[i].valid = TRUE;
+        pageTable[i].physicalPage = -1;
+        pageTable[i].valid = FALSE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;
-        bzero(machine->mainMemory + (pageTable[i].physicalPage * 128), PageSize);
+        //bzero(machine->mainMemory + (pageTable[i].physicalPage * 128), PageSize);
     }
 
     // Copy the code section into memory
@@ -149,6 +154,60 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     memLock->Release();
 }
 
+bool AddrSpace::LoadVirtPage(int vpn) {
+    int counter, ppn, victimPage;
+    
+    memLock->Acquire();
+    
+    ASSERT(pageTable[vpn].virtualPage == vpn);
+    
+    ppn = mans_man->allocate();
+    if (ppn != -1) {
+        DEBUG('d', "\tVPN %d - Allocated physPage %d\n", vpn, ppn);
+        pageTable[vpn].physicalPage = ppn;
+        //TODO other pagetable fields
+    } else {
+        DEBUG('d', "\tVPN %d - Need to find a victim page\n", vpn);
+        victimPage = mans_man->findVictimPage();
+        ASSERT(victimPage != -1); //then we could not find a victim page to evict
+    }
+    
+    if (1==1) {
+        return true;
+    }
+    
+    // Copy the code section into memory
+    counter = 0;
+    if (noffHeader.code.size > 0) {
+        DEBUG('d', "\tInitializing code segment, at 0x%x, size %d\n",
+                noffHeader.code.virtualAddr, noffHeader.code.size);
+
+        while (counter < noffHeader.code.size) {
+
+            executableFile->ReadAt(&(machine->mainMemory[myTranslate(noffHeader.code.virtualAddr + counter)]),
+                    1, noffHeader.code.inFileAddr + counter);
+            counter++;
+        }
+    }
+
+    // Copy the initialized data section
+    counter = 0;
+    if (noffHeader.initData.size > 0) {
+        DEBUG('d', "\tInitializing data segment, at 0x%x, size %d\n",
+                noffHeader.initData.virtualAddr, noffHeader.initData.size);
+        while (counter < noffHeader.initData.size) {
+
+            executableFile->ReadAt(&(machine->mainMemory[myTranslate(noffHeader.initData.virtualAddr + counter)]),
+                    1, noffHeader.initData.inFileAddr + counter);
+
+            counter++;
+        }
+    }
+    
+    memLock->Release();
+    
+    return false; //virtual page could not be loaded into memory
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
