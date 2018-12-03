@@ -55,7 +55,7 @@ public:
     void execThread(OpenFile * executable);
     unsigned int myTranslate(int virtAddr);
     //page swapping
-    bool AddrSpace::LoadVirtPage(int vpn);
+    bool AddrSpace::LoadPhysPage(int vpn);
 
 private:
     bool worked;

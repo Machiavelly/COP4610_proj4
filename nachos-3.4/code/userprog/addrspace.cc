@@ -154,7 +154,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     memLock->Release();
 }
 
-bool AddrSpace::LoadVirtPage(int vpn) {
+bool AddrSpace::LoadPhysPage(int vpn) {
     int counter, ppn, victimPage;
     
     memLock->Acquire();
