@@ -133,7 +133,7 @@ AddrSpace::AddrSpace(char* fileName) {
 }
 
 bool AddrSpace::LoadPhysPage(int vpn) {
-    int ppn, physAddr, victimPage, numCodePages, numInitDataPages, numUninitDataPages;
+    int ppn, physAddr, victimPage, numCodePages, numInitDataPages, numUninitDataPages, nPages;
     
     memLock->Acquire();
     
@@ -160,15 +160,23 @@ bool AddrSpace::LoadPhysPage(int vpn) {
     
     DEBUG('d', "\tStarting to fill pages in memory. PPN = %d\n", ppn);
     
-    if (vpn < numCodePages) { //if writing to code section
-        DEBUG('b', "\t\tCode - fileVirtAddr %d\n", noffHeader.code.virtualAddr);
+    if (vpn < numCodePages && 
+            !(numCodePages != noffHeader.code.size / PageSize && vpn == numCodePages - 1)
+        ) { //if writing to code section
+        DEBUG('b', "\t\tCode - fileVirtAddr %d - offset %d\n", 
+                noffHeader.code.virtualAddr, 
+                noffHeader.code.inFileAddr + vpn*PageSize);
+        
         executableFile->ReadAt(&(machine->mainMemory[physAddr]),
-            PageSize, noffHeader.code.inFileAddr);
+            PageSize, noffHeader.code.inFileAddr + vpn*PageSize);
+        
         pageTable[vpn].readOnly = TRUE;
     } else if (vpn < numCodePages + numInitDataPages) { //initdata
         DEBUG('b', "\t\tInitdata - fileVirtAddr %d\n", noffHeader.initData.virtualAddr);
+        
         executableFile->ReadAt(&(machine->mainMemory[physAddr]),
-            PageSize, noffHeader.initData.inFileAddr);
+            PageSize, noffHeader.initData.inFileAddr + vpn*PageSize);
+        
     } else if (vpn < numCodePages + numInitDataPages + numUninitDataPages) { //uninitDat
         DEBUG('b', "\t\tUninitdata\n");
         bzero(&( machine->mainMemory[physAddr] ), PageSize);
